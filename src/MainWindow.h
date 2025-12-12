@@ -13,6 +13,11 @@
 #include <QDoubleSpinBox>
 #include "ImageDisplay.h"
 
+enum adaptativeMethod {
+    MEAN_C,
+    GAUSSIAN_C
+};
+
 struct HoughParams {
     double dp;
     double minDist;
@@ -20,6 +25,13 @@ struct HoughParams {
     double param2;
     int minRadius;
     int maxRadius;
+};
+
+
+struct AdaptativeParams {
+    adaptativeMethod method;
+    int blockSize;
+    double C;
 };
 
 class MainWindow : public QMainWindow
@@ -48,6 +60,7 @@ private:
     double _imgScale = 1.0;
 
     HoughParams _params = {1.0, 20.0, 10.0, 14.0, 40, 60};
+    AdaptativeParams _adaptParams = {MEAN_C, 11, -10.0};
 
     QLineEdit *dpEdit;
     QLineEdit *minDistEdit;
@@ -56,6 +69,11 @@ private:
     QLineEdit *minRadiusEdit;
     QLineEdit *maxRadiusEdit;
 
+    QRadioButton *meanCBtn;
+    QRadioButton *gaussianCBtn;
+    QLineEdit *adaptCEdit;
+    QLineEdit *adaptBlockSizeEdit;
+
 private slots:
     void resetImage();
     void applyThreshold();
@@ -63,6 +81,7 @@ private slots:
     void applyMask();
     void getHoughParams();
     void applyHoughCircles();
+    void applyAdaptativeThreshold();
 };
 
 #endif // MAINWINDOW_H

@@ -39,6 +39,7 @@ void MainWindow::_setupUI()
     QPushButton *resetBtn       = new QPushButton("Reset");
     QPushButton *ccBtn          = new QPushButton("Connected Components");
     QPushButton *houghBtn       = new QPushButton("Hough Circles");
+    QPushButton *adaptBtn       = new QPushButton("Adaptative Threshold");
 
     dpEdit                     = new QLineEdit("1.0");
     minDistEdit                = new QLineEdit("20.0");
@@ -46,6 +47,11 @@ void MainWindow::_setupUI()
     param2Edit                 = new QLineEdit("14");
     minRadiusEdit              = new QLineEdit("40");
     maxRadiusEdit              = new QLineEdit("60");
+
+    meanCBtn                   = new QRadioButton("Mean C");
+    gaussianCBtn               = new QRadioButton("Gaussian C");
+    adaptCEdit                 = new QLineEdit("-10.0");
+    adaptBlockSizeEdit         = new QLineEdit("11");
 
     _binThreshold               = new QSlider(this);
     _binThreshold->setOrientation(Qt::Horizontal);
@@ -95,7 +101,7 @@ void MainWindow::_setupUI()
 
     houghVbox->addWidget(houghBtn);
     // Helper lambda to add a label and input on the same line
-    auto addLabelAndInput = [&](const QString &text, QLineEdit *edit) {
+    auto addLabelAndInputHough = [&](const QString &text, QLineEdit *edit) {
         QHBoxLayout *hLayout = new QHBoxLayout();
         hLayout->addWidget(new QLabel(text));
         hLayout->addWidget(edit);
@@ -105,13 +111,37 @@ void MainWindow::_setupUI()
     _sideLayout->addLayout(houghVbox);
 
     // Add all Hough parameters
-    addLabelAndInput("dp:", dpEdit);
-    addLabelAndInput("minDist:", minDistEdit);
-    addLabelAndInput("param1:", param1Edit);
-    addLabelAndInput("param2:", param2Edit);
-    addLabelAndInput("minRadius:", minRadiusEdit);
-    addLabelAndInput("maxRadius:", maxRadiusEdit);
+    addLabelAndInputHough("dp:", dpEdit);
+    addLabelAndInputHough("minDist:", minDistEdit);
+    addLabelAndInputHough("param1:", param1Edit);
+    addLabelAndInputHough("param2:", param2Edit);
+    addLabelAndInputHough("minRadius:", minRadiusEdit);
+    addLabelAndInputHough("maxRadius:", maxRadiusEdit);
     _sideLayout->addWidget(houghGroup);
+
+    QGroupBox *adaptativeGroup = new QGroupBox(this);
+    QVBoxLayout *adaptativeVBox = new QVBoxLayout;
+    adaptativeVBox->addWidget(adaptBtn);
+    auto addLabelAndInputAdaptative = [&](const QString &text, QLineEdit *edit) {
+        QHBoxLayout *hLayout = new QHBoxLayout();
+        hLayout->addWidget(new QLabel(text));
+        hLayout->addWidget(edit);
+        adaptativeVBox->addLayout(hLayout);
+    };
+    adaptativeGroup->setLayout(adaptativeVBox);
+    _sideLayout->addLayout(adaptativeVBox);
+
+    QButtonGroup *adaptMethodGroup = new QButtonGroup(this);
+    adaptMethodGroup->addButton(meanCBtn);
+    adaptMethodGroup->addButton(gaussianCBtn);
+    adaptMethodGroup->setExclusive(true);
+    adaptativeVBox->addWidget(meanCBtn);
+    adaptativeVBox->addWidget(gaussianCBtn);
+    meanCBtn->setChecked(true); // default
+    addLabelAndInputAdaptative("C:", adaptCEdit);
+    addLabelAndInputAdaptative("Block size:", adaptBlockSizeEdit);
+    _sideLayout->addWidget(adaptativeGroup);
+
     _sideLayout->addWidget(resetBtn);
 
     // ---- Licencing ----
@@ -160,7 +190,6 @@ void MainWindow::_setupUI()
             _display->leftClicTool = DRAW_CIRCLE;
         }
     });
-
     connect(houghBtn, &QPushButton::clicked, this, &MainWindow::applyHoughCircles);
     connect(dpEdit, &QLineEdit::editingFinished, this, &MainWindow::getHoughParams);
     connect(minDistEdit, &QLineEdit::editingFinished, this, &MainWindow::getHoughParams);
@@ -168,6 +197,16 @@ void MainWindow::_setupUI()
     connect(param2Edit, &QLineEdit::editingFinished, this, &MainWindow::getHoughParams);
     connect(minRadiusEdit, &QLineEdit::editingFinished, this, &MainWindow::getHoughParams);
     connect(maxRadiusEdit, &QLineEdit::editingFinished, this, &MainWindow::getHoughParams);
+
+    connect(adaptBtn, &QPushButton::clicked, this, &MainWindow::applyAdaptativeThreshold);
+    connect(adaptMethodGroup, &QButtonGroup::idClicked, this, [=](int id) {
+        if (adaptMethodGroup->button(id) == meanCBtn ) {
+            _adaptParams.method = MEAN_C;
+        } else {
+            _adaptParams.method = GAUSSIAN_C;
+        }
+    });
+
 }
 
 void MainWindow::_loadImage()
@@ -337,5 +376,42 @@ void MainWindow::applyHoughCircles()
     _display->showConnectedComponents(cv::Mat(), cv::Mat()); // clear CC overlay
     _display->showHoughCircles(circles);
     // Display the updated image with circles
+    _displayImage();
+}
+
+void MainWindow::applyAdaptativeThreshold()
+{
+    if(_originalImage.empty()) return;
+    // convert to grayscale, single channel with max over rgb
+    // 1) Max-channel grayscale
+    cv::Mat ch[3];
+    cv::split(_originalImage, ch);        // B, G, R
+    cv::Mat maxGray;
+    cv::max(ch[0], ch[1], maxGray);
+    cv::max(maxGray, ch[2], maxGray);
+
+    // 2) Apply adaptative threshold
+    int blockSize = adaptBlockSizeEdit->text().toInt();
+    if (blockSize % 2 == 0) blockSize += 1; // must be odd
+    double C = adaptCEdit->text().toDouble();
+    int method = (_adaptParams.method == MEAN_C) ? cv::ADAPTIVE_THRESH_MEAN_C : cv::ADAPTIVE_THRESH_GAUSSIAN_C;
+
+    QApplication::setOverrideCursor(Qt::WaitCursor);
+    try {
+        cv::adaptiveThreshold(maxGray, _currentImage, 255, method,
+                            cv::THRESH_BINARY, blockSize, C);
+    } catch (const cv::Exception &e) {
+        QMessageBox::critical(this, "Adaptative Threshold Error",
+                              QString("Error: %1").arg(e.what()));
+        QApplication::restoreOverrideCursor();
+        return;
+    }
+    QApplication::restoreOverrideCursor();
+    if(!_currentMask.empty()){
+        cv::Mat maskedImage;
+        _currentImage.copyTo(maskedImage, _currentMask);
+        _currentImage = maskedImage;
+    }
+
     _displayImage();
 }
