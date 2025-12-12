@@ -27,14 +27,31 @@ jobs:
           modules: qt5compat qtimageformats
           cache: true
 
-      - name: Install OpenCV (Linux only)
+      - name: Install OpenCV (ubuntu)
         if: startsWith(matrix.os, 'ubuntu')
         run: |
           sudo apt update
           sudo apt install -y libopencv-dev
 
-      - name: Configure
+      - name: Install OpenCV (macOS)
+        if: startsWith(matrix.os, 'macos')
+        run: |
+          brew update
+          brew install opencv
+
+      - name: Configure (ubuntu)
+        if: startsWith(matrix.os, 'ubuntu')
         run: cmake -S . -B build -DCMAKE_BUILD_TYPE=${{ matrix.build_type }}
+
+      - name: Configure (macOS)
+        if: startsWith(matrix.os, 'macos')
+        run: cmake -S . -B build -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} -DOpenCV_DIR=$(brew --prefix opencv)/share/opencv4
 
       - name: Build
         run: cmake --build build --parallel
+
+      - name: Upload binaries
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.os }}-${{ matrix.build_type }}
+          path: build/*
