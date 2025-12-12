@@ -8,6 +8,25 @@ The aim is to help experimentalists quickly identify the correct parameters for 
 
 Download directly the binary for your distribution in Releases.
 
+# Requirements
+## Ubuntu 22.04
+```
+sudo apt install libopencv-dev qt6-base-dev
+```
+
+## Ubuntu 24.04
+```
+sudo apt install libopencv-dev qt6-base-dev libglx-dev libgl1-mesa-dev
+```
+
+
+## MacOs 15+
+(_not tested_)
+```
+brew install opencv
+brew install qt
+```
+
 # Build requirements
 
 * C++ >= 17
