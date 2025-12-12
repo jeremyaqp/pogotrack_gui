@@ -226,6 +226,7 @@ void MainWindow::resetImage()
 {
     _display->hideHoughCircles();
     _currentImage = _originalImage.clone();
+    _currentMask = cv::Mat();
     _display->showConnectedComponents(cv::Mat(), cv::Mat()); // clear CC overlay
     _display->resetLine();
     _displayImage();
