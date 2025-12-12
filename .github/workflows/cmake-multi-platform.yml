@@ -32,6 +32,18 @@ jobs:
     steps:
     - uses: actions/checkout@v4
 
+    - name: Install Qt
+      uses: jurplel/install-qt-action@v4
+      with:
+        version: '6.6.3'
+        modules: qt5compat qtimageformats
+        cache: true
+
+    - name: Install OpenCV
+      run: |
+        sudo apt update
+        sudo apt install -y libopencv-dev
+
     - name: Set reusable strings
       # Turn repeated input strings (such as the build output directory) into step outputs. These step outputs can be used throughout the workflow file.
       id: strings
