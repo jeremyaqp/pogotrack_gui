@@ -11,6 +11,8 @@ find_package(OpenCV REQUIRED)
 
 include_directories(${OpenCV_INCLUDE_DIRS})
 
+qt_add_resources(QT_RESOURCES resources.qrc)
+
 add_executable(pogotrack_gui
     src/main.cpp
     src/ImageDisplay.h
@@ -18,6 +20,7 @@ add_executable(pogotrack_gui
     src/MainWindow.cpp
     src/MainWindow.h
     src/Filter.h
+    ${QT_RESOURCES}
 )
 
 target_link_libraries(pogotrack_gui

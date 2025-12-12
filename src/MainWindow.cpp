@@ -20,7 +20,7 @@ MainWindow::~MainWindow() {}
 void MainWindow::_setupUI()
 {
     setWindowTitle("PogoTrack GUI");
-    setWindowIcon(QIcon("../assets/icon.png"));
+    setWindowIcon(QIcon(":/assets/icon.png"));
     // ---- Elements definition ----
     QWidget *centralWidget = new QWidget;
     QHBoxLayout *mainLayout = new QHBoxLayout;
@@ -62,7 +62,7 @@ void MainWindow::_setupUI()
     _sideLayout->addSpacing(8);   // Space after category
 
     // ---- Tools ----
-    QLabel *maskLabel = new QLabel("Tools");
+    QLabel *maskLabel = new QLabel("Measuring Tools");
     maskLabel->setStyleSheet("font-weight: bold; font-size: 14px;");
     _sideLayout->addWidget(maskLabel);
 
@@ -121,9 +121,10 @@ void MainWindow::_setupUI()
     brLayout->setSpacing(0);
 
     QLabel *teamLabel = new QLabel("Pogoteam 2025");
-    QLabel *licenceLabel = new QLabel("CC BY-NC");
+    QLabel *licenceLabel = new QLabel();
+    QPixmap licencePixmap(":/assets/by-nc.png");
     teamLabel->setStyleSheet("font-size: 14px;");
-    licenceLabel->setStyleSheet("font-size: 14px;");
+    licenceLabel->setPixmap(licencePixmap.scaled(100, 100, Qt::KeepAspectRatio, Qt::SmoothTransformation));
 
     brLayout->addWidget(teamLabel);
     brLayout->addWidget(licenceLabel);
