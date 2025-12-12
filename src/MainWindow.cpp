@@ -3,6 +3,11 @@
 #include <QPixmap>
 #include <QImage>
 #include <QFileDialog>
+#include <QLineEdit>
+#include <QCursor>
+#include <QMessageBox>
+#include <QApplication>
+#include <QGroupBox>
 
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
@@ -26,15 +31,23 @@ void MainWindow::_setupUI()
     _sidePanel = new QWidget;
     _sideLayout = new QVBoxLayout;
 
-    QPushButton *browse = new QPushButton("Open test image");
-    QRadioButton *lineToolBtn = new QRadioButton("Line");
-    QRadioButton *rectToolBtn = new QRadioButton("Rectangle");
-    QRadioButton *circToolBtn = new QRadioButton("Circle");
-    QPushButton *applyMaskBtn = new QPushButton("Apply Mask");
-    QPushButton *resetBtn = new QPushButton("Reset");
-    QPushButton *ccBtn = new QPushButton("Connected Components");
+    QPushButton *browse         = new QPushButton("Open test image");
+    QRadioButton *lineToolBtn   = new QRadioButton("Line");
+    QRadioButton *rectToolBtn   = new QRadioButton("Rectangle");
+    QRadioButton *circToolBtn   = new QRadioButton("Circle");
+    QPushButton *applyMaskBtn   = new QPushButton("Apply Mask");
+    QPushButton *resetBtn       = new QPushButton("Reset");
+    QPushButton *ccBtn          = new QPushButton("Connected Components");
+    QPushButton *houghBtn       = new QPushButton("Hough Circles");
 
-    _binThreshold = new QSlider(this);
+    dpEdit                     = new QLineEdit("1.0");
+    minDistEdit                = new QLineEdit("20.0");
+    param1Edit                 = new QLineEdit("10");
+    param2Edit                 = new QLineEdit("14");
+    minRadiusEdit              = new QLineEdit("40");
+    maxRadiusEdit              = new QLineEdit("60");
+
+    _binThreshold               = new QSlider(this);
     _binThreshold->setOrientation(Qt::Horizontal);
     _binThreshold->setRange(0, 255);
     _binThreshold->setValue(255);
@@ -76,6 +89,29 @@ void MainWindow::_setupUI()
     _sideLayout->addWidget(_threshValueLabel);
     _sideLayout->addWidget(_binThreshold);
     _sideLayout->addWidget(ccBtn);
+
+    QGroupBox *houghGroup = new QGroupBox(this);
+    QVBoxLayout *houghVbox = new QVBoxLayout;
+
+    houghVbox->addWidget(houghBtn);
+    // Helper lambda to add a label and input on the same line
+    auto addLabelAndInput = [&](const QString &text, QLineEdit *edit) {
+        QHBoxLayout *hLayout = new QHBoxLayout();
+        hLayout->addWidget(new QLabel(text));
+        hLayout->addWidget(edit);
+        houghVbox->addLayout(hLayout);
+    };
+    houghGroup->setLayout(houghVbox);
+    _sideLayout->addLayout(houghVbox);
+
+    // Add all Hough parameters
+    addLabelAndInput("dp:", dpEdit);
+    addLabelAndInput("minDist:", minDistEdit);
+    addLabelAndInput("param1:", param1Edit);
+    addLabelAndInput("param2:", param2Edit);
+    addLabelAndInput("minRadius:", minRadiusEdit);
+    addLabelAndInput("maxRadius:", maxRadiusEdit);
+    _sideLayout->addWidget(houghGroup);
     _sideLayout->addWidget(resetBtn);
 
     // ---- Licencing ----
@@ -123,6 +159,14 @@ void MainWindow::_setupUI()
             _display->leftClicTool = DRAW_CIRCLE;
         }
     });
+
+    connect(houghBtn, &QPushButton::clicked, this, &MainWindow::applyHoughCircles);
+    connect(dpEdit, &QLineEdit::editingFinished, this, &MainWindow::getHoughParams);
+    connect(minDistEdit, &QLineEdit::editingFinished, this, &MainWindow::getHoughParams);
+    connect(param1Edit, &QLineEdit::editingFinished, this, &MainWindow::getHoughParams);
+    connect(param2Edit, &QLineEdit::editingFinished, this, &MainWindow::getHoughParams);
+    connect(minRadiusEdit, &QLineEdit::editingFinished, this, &MainWindow::getHoughParams);
+    connect(maxRadiusEdit, &QLineEdit::editingFinished, this, &MainWindow::getHoughParams);
 }
 
 void MainWindow::_loadImage()
@@ -179,6 +223,7 @@ void MainWindow::applyThreshold()
 
 void MainWindow::resetImage()
 {
+    _display->hideHoughCircles();
     _currentImage = _originalImage.clone();
     _display->showConnectedComponents(cv::Mat(), cv::Mat()); // clear CC overlay
     _display->resetLine();
@@ -189,6 +234,7 @@ void MainWindow::connectedComponentsMode()
 {
     if(_currentImage.empty()) return;
     // Convert to grayscale if needed
+    _display->hideHoughCircles();
     cv::Mat gray;
     if (_currentImage.channels() == 3)
         cv::cvtColor(_currentImage, gray, cv::COLOR_BGR2GRAY);
@@ -235,5 +281,59 @@ void MainWindow::applyMask()
     _currentImage.copyTo(maskedImage, _currentMask);
 
     _currentImage = maskedImage;
+    _displayImage();
+}
+
+void MainWindow::getHoughParams()
+{
+    _params.dp        = dpEdit->text().toDouble();
+    _params.minDist   = minDistEdit->text().toDouble();
+    _params.param1    = param1Edit->text().toDouble();
+    _params.param2    = param2Edit->text().toDouble();
+    _params.minRadius = minRadiusEdit->text().toInt();
+    _params.maxRadius = maxRadiusEdit->text().toInt();
+}
+
+void MainWindow::applyHoughCircles()
+{
+    if(_currentImage.empty()) return;
+
+    // Convert to grayscale
+    cv::Mat gray;
+    if (_currentImage.channels() == 3){
+        // 1) Max-channel grayscale
+        cv::Mat ch[3];
+        cv::split(_currentImage, ch);
+        cv::max(ch[0], ch[1], gray);
+        cv::max(gray, ch[2], gray);
+    } else {
+        gray = _currentImage.clone();
+    }
+
+    QApplication::setOverrideCursor(Qt::WaitCursor);
+
+    // Apply Hough Circle Transform
+    std::vector<cv::Vec3f> circles;
+    try {
+    cv::HoughCircles(gray, circles, cv::HOUGH_GRADIENT,
+                     _params.dp, _params.minDist,
+                     _params.param1, _params.param2,
+                     _params.minRadius, _params.maxRadius);
+    } catch (const cv::Exception &e) {
+        QMessageBox::critical(this, "Hough Circles Error",
+                              QString("Error: %1").arg(e.what()));
+        QApplication::restoreOverrideCursor();
+        return;
+    }
+    int numCircles = static_cast<int>(circles.size());
+    QApplication::restoreOverrideCursor();
+
+    QMessageBox::information(this, "Hough Circles Result",
+                             QString("Found %1 circles").arg(numCircles));
+    
+    _display->resetLine();
+    _display->showConnectedComponents(cv::Mat(), cv::Mat()); // clear CC overlay
+    _display->showHoughCircles(circles);
+    // Display the updated image with circles
     _displayImage();
 }

@@ -169,7 +169,23 @@ void ImageDisplay::paintEvent(QPaintEvent *)
             painter.drawText(p + QPointF(6, -6),
                             QString::number(_ccAreas[i]));
         }
-    }  
+    }
+    if (_drawHough)
+    {
+        painter.setPen(QPen(Qt::green, 2));
+
+        for (const auto& circle : _circles)
+        {
+            QPoint center(
+                circle[0] * scale + panOffset.x(),
+                circle[1] * scale + panOffset.y()
+            );
+            int radius = circle[2] * scale;
+
+            // Draw circle
+            painter.drawEllipse(center, radius, radius);
+        }
+    }
 
 }
 
@@ -345,4 +361,11 @@ cv::Mat ImageDisplay::getMaskFromTool() const{
     }
 
     return mask;
+}
+
+void ImageDisplay::showHoughCircles(const std::vector<cv::Vec3f>& circles)
+{
+    _circles = circles;
+    _drawHough = true;
+    update();  // triggers paintEvent
 }

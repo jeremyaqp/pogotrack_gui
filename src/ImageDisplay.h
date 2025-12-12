@@ -35,6 +35,12 @@ public:
     };
     cv::Mat getMaskFromTool() const;
 
+    void showHoughCircles(const std::vector<cv::Vec3f>& circles);
+    void hideHoughCircles(){
+        _drawHough = false;
+        update();
+    };
+
 protected:
     // Qt event overrides
     void paintEvent(QPaintEvent *event) override;
@@ -67,6 +73,8 @@ private:
 
     // Helpers
     QImage matToQImage(const cv::Mat &mat);
+    std::vector<cv::Vec3f> _circles;
+    bool _drawHough = false;
 };
 
 #endif // IMAGEDISPLAY_H

@@ -13,6 +13,15 @@
 #include <QDoubleSpinBox>
 #include "ImageDisplay.h"
 
+struct HoughParams {
+    double dp;
+    double minDist;
+    double param1;
+    double param2;
+    int minRadius;
+    int maxRadius;
+};
+
 class MainWindow : public QMainWindow
 {
     Q_OBJECT
@@ -38,11 +47,22 @@ private:
     QSlider* _binThreshold;
     double _imgScale = 1.0;
 
+    HoughParams _params = {1.0, 20.0, 10.0, 14.0, 40, 60};
+
+    QLineEdit *dpEdit;
+    QLineEdit *minDistEdit;
+    QLineEdit *param1Edit;
+    QLineEdit *param2Edit;
+    QLineEdit *minRadiusEdit;
+    QLineEdit *maxRadiusEdit;
+
 private slots:
     void resetImage();
     void applyThreshold();
     void connectedComponentsMode();
     void applyMask();
+    void getHoughParams();
+    void applyHoughCircles();
 };
 
 #endif // MAINWINDOW_H
