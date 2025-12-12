@@ -167,7 +167,7 @@ void ImageDisplay::paintEvent(QPaintEvent *)
 
             // Draw area text
             painter.drawText(p + QPointF(6, -6),
-                            QString::number(_ccAreas[i]));
+                            QString::number(_ccAreas[i]) + " (" + QString::number(_ccCenters[i].x(), 'f', 0) + ", " + QString::number(_ccCenters[i].y(), 'f', 0) + ")");
         }
     }
     if (_drawHough)
