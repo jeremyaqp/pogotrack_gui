@@ -1,0 +1,63 @@
+name: Build CMake Project
+
+on:
+  workflow_dispatch:
+  push:
+    branches: ["main"]
+  pull_request:
+    branches: ["main"]
+
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-22.04, ubuntu-24.04, macos-15]
+        build_type: [Release]
+
+    runs-on: ${{ matrix.os }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Dependencies (Ubuntu 22.04)
+        if: matrix.os == 'ubuntu-22.04'
+        run: |
+          sudo apt update
+          sudo apt install -y libopencv-dev
+          sudo apt install qt6-base-dev libglx-dev libgl1-mesa-dev
+
+      - name: Install Dependencies (Ubuntu 24.04)
+        if: matrix.os == 'ubuntu-24.04'
+        run: |
+          sudo apt update
+          sudo apt install -y libopencv-dev
+          sudo apt install qt6-base-dev
+
+      - name: Install Dependencies (macOS)
+        if: startsWith(matrix.os, 'macos')
+        run: |
+          brew update
+          brew install opencv
+          brew install qt
+
+      # Configure
+      - name: Configure (Ubuntu)
+        if: startsWith(matrix.os, 'ubuntu')
+        run: cmake -S . -B build -DCMAKE_BUILD_TYPE=${{ matrix.build_type }}
+
+      - name: Configure (macOS)
+        if: startsWith(matrix.os, 'macos')
+        run: cmake -S . -B build -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} -DOpenCV_DIR=$(brew --prefix opencv)/share/opencv4
+
+      # Build
+      - name: Build
+        run: cmake --build build --parallel
+
+      # Upload final artifacts
+      - name: Upload binaries
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.os }}-${{ matrix.build_type }}
+          path: |
+            build/pogotrack_gui*
