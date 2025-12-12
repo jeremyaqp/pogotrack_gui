@@ -54,30 +54,6 @@ jobs:
       - name: Build
         run: cmake --build build --parallel
 
-      # Linux: Bundle Qt + OpenCV
-      - name: Bundle Linux binary with linuxdeployqt
-        if: startsWith(matrix.os, 'ubuntu')
-        run: |
-          wget https://github.com/probonopd/linuxdeployqt/releases/download/continuous/linuxdeployqt-continuous-x86_64.AppImage
-          chmod a+x linuxdeployqt-continuous-x86_64.AppImage
-          # Copy OpenCV .so libs into build dir
-          mkdir -p build/usr/lib
-          cp /usr/lib/x86_64-linux-gnu/libopencv*.so* build/usr/lib/ || cp /usr/local/lib/libopencv*.so* build/usr/lib/
-          ./linuxdeployqt-continuous-x86_64.AppImage build/pogotrack_gui -qmldir=. -bundle-non-qt-libs
-
-      # macOS: Bundle Qt + OpenCV
-      - name: Bundle macOS .app with Qt and OpenCV
-        if: startsWith(matrix.os, 'macos')
-        run: |
-          macdeployqt build/pogotrack_gui.app
-          # Copy OpenCV dylibs
-          cp $(brew --prefix opencv)/lib/*.dylib build/pogotrack_gui.app/Contents/Frameworks/
-          # Fix install names
-          for lib in build/pogotrack_gui.app/Contents/Frameworks/*.dylib; do
-            install_name_tool -id @executable_path/../Frameworks/$(basename $lib) $lib
-            install_name_tool -change $(brew --prefix opencv)/lib/$(basename $lib) @executable_path/../Frameworks/$(basename $lib) build/pogotrack_gui.app/Contents/MacOS/pogotrack_gui
-          done
-
       # Upload final artifacts
       - name: Upload binaries
         uses: actions/upload-artifact@v4
@@ -85,4 +61,3 @@ jobs:
           name: ${{ matrix.os }}-${{ matrix.build_type }}
           path: |
             build/pogotrack_gui*
-            build/pogotrack_gui.app
