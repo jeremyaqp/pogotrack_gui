@@ -20,26 +20,19 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      # Install Qt
-      - name: Install Qt
-        uses: jurplel/install-qt-action@v4
-        with:
-          version: "6.6.3"
-          modules: qt5compat qtimageformats
-          cache: true
-
-      # Install OpenCV
-      - name: Install OpenCV (Ubuntu)
+      - name: Install Dependencies (Ubuntu)
         if: startsWith(matrix.os, 'ubuntu')
         run: |
           sudo apt update
           sudo apt install -y libopencv-dev
+          sudo apt install  qt6-base-dev
 
-      - name: Install OpenCV (macOS)
+      - name: Install Dependencies (macOS)
         if: startsWith(matrix.os, 'macos')
         run: |
           brew update
           brew install opencv
+          brew install qt
 
       # Configure
       - name: Configure (Ubuntu)
