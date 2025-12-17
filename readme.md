@@ -20,7 +20,6 @@ sudo apt install libopencv-dev qt6-base-dev
 ```
 
 ## MacOs 15+
-(_not tested_)
 ```
 brew install opencv
 brew install qt
