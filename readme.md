@@ -31,3 +31,4 @@ brew install qt
 
 * CMake >= 3.10
 * QT >= 6.10
+* OpenCv >= 4.12.0
