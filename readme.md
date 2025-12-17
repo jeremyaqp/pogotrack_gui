@@ -11,14 +11,13 @@ Download directly the binary for your distribution in Releases.
 # Requirements
 ## Ubuntu 22.04
 ```
-sudo apt install libopencv-dev qt6-base-dev
+sudo apt install libopencv-dev qt6-base-dev libglx-dev libgl1-mesa-dev
 ```
 
 ## Ubuntu 24.04
 ```
-sudo apt install libopencv-dev qt6-base-dev libglx-dev libgl1-mesa-dev
+sudo apt install libopencv-dev qt6-base-dev
 ```
-
 
 ## MacOs 15+
 (_not tested_)
