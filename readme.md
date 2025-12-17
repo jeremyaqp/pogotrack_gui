@@ -29,6 +29,5 @@ brew install qt
 
 # Build requirements
 
-* C++ >= 17
 * CMake >= 3.10
 * QT >= 6.10
