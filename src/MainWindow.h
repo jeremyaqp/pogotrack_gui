@@ -13,6 +13,9 @@
 #include <QDoubleSpinBox>
 #include "ImageDisplay.h"
 
+#define CONNECTED_COMPONENTS 0x01
+#define HOUGH_CIRCLES        0x02
+
 enum adaptativeMethod {
     MEAN_C,
     GAUSSIAN_C
@@ -56,6 +59,11 @@ private:
     void _loadImage();
     void _displayImage();
     void _displayImage(cv::Mat img);
+
+    uint8_t _currentOverlays = 0;
+    cv::Mat _ccstats;
+    cv::Mat _cccentroids;
+    std::vector<cv::Vec3f> _HoughCircles;
 
     QSlider* _binThreshold;
     double _imgScale = 1.0;

@@ -30,10 +30,6 @@ public:
     void hideConnectedComponents();
     leftClicToolType leftClicTool = DRAW_LINE;
 
-    void resetLine(){
-        _lineStart = QPoint();
-        _lineEnd = QPoint();
-    };
     cv::Mat getMaskFromTool() const;
 
     void showHoughCircles(const std::vector<cv::Vec3f>& circles);

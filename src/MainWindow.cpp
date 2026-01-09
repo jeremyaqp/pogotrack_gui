@@ -225,14 +225,7 @@ void MainWindow::_loadImage()
 
 void MainWindow::_displayImage()
 {
-    if(_currentImage.empty()) return;
-    cv::Mat rgb;
-    if (_currentImage.channels() == 1)
-        cv::cvtColor(_currentImage, rgb, cv::COLOR_GRAY2RGB);
-    else
-        cv::cvtColor(_currentImage, rgb, cv::COLOR_BGR2RGB);
-    _display->hideConnectedComponents();
-    _display->setImage(_currentImage);
+    _displayImage(_currentImage);
 }
 
 
@@ -244,6 +237,15 @@ void MainWindow::_displayImage(cv::Mat img)
         cv::cvtColor(img, rgb, cv::COLOR_GRAY2RGB);
     else
         cv::cvtColor(img, rgb, cv::COLOR_BGR2RGB);
+
+    if(_currentOverlays & CONNECTED_COMPONENTS)
+        _display->showConnectedComponents(_ccstats, _cccentroids);
+    else
+        _display->hideConnectedComponents();
+    if(_currentOverlays & HOUGH_CIRCLES)
+        _display->showHoughCircles(_HoughCircles);
+    else
+        _display->hideHoughCircles();
 
     _display->setImage(img);
 }
@@ -268,7 +270,7 @@ void MainWindow::applyThreshold()
         _currentImage.copyTo(maskedImage, _currentMask);
         _currentImage = maskedImage;
     }
-
+    _currentOverlays = 0; // reset overlays
     // 3) Display
     _displayImage();
     _threshValueLabel->setText("Threshold : " + QString::number((int)thres));
@@ -276,19 +278,15 @@ void MainWindow::applyThreshold()
 
 void MainWindow::resetImage()
 {
-    _display->hideHoughCircles();
     _currentImage = _originalImage.clone();
     _currentMask = cv::Mat();
-    _display->showConnectedComponents(cv::Mat(), cv::Mat()); // clear CC overlay
-    _display->resetLine();
+    _currentOverlays = 0;
     _displayImage();
 }
 
 void MainWindow::connectedComponentsMode()
 {
     if(_currentImage.empty()) return;
-    // Convert to grayscale if needed
-    _display->hideHoughCircles();
     cv::Mat gray;
     if (_currentImage.channels() == 3)
         cv::cvtColor(_currentImage, gray, cv::COLOR_BGR2GRAY);
@@ -316,10 +314,11 @@ void MainWindow::connectedComponentsMode()
         for (int x = 0; x < labels.cols; x++)
             coloredLabels.at<cv::Vec3b>(y,x) = colors[ labels.at<int>(y,x) ];
 
+    _currentOverlays |= CONNECTED_COMPONENTS;
+    _ccstats = stats;
+    _cccentroids = centroids;
     // Show the updated colored image
     _displayImage(coloredLabels);
-    // Tell ImageDisplay to draw centroids + areas on top
-    _display->showConnectedComponents(stats, centroids);
 }
 
 void MainWindow::applyMask()
@@ -366,9 +365,8 @@ void MainWindow::applyHoughCircles()
     QApplication::setOverrideCursor(Qt::WaitCursor);
 
     // Apply Hough Circle Transform
-    std::vector<cv::Vec3f> circles;
     try {
-    cv::HoughCircles(gray, circles, cv::HOUGH_GRADIENT,
+    cv::HoughCircles(gray, _HoughCircles, cv::HOUGH_GRADIENT,
                      _params.dp, _params.minDist,
                      _params.param1, _params.param2,
                      _params.minRadius, _params.maxRadius);
@@ -378,15 +376,13 @@ void MainWindow::applyHoughCircles()
         QApplication::restoreOverrideCursor();
         return;
     }
-    int numCircles = static_cast<int>(circles.size());
+    int numCircles = static_cast<int>(_HoughCircles.size());
     QApplication::restoreOverrideCursor();
 
     QMessageBox::information(this, "Hough Circles Result",
                              QString("Found %1 circles").arg(numCircles));
-    
-    _display->resetLine();
-    _display->showConnectedComponents(cv::Mat(), cv::Mat()); // clear CC overlay
-    _display->showHoughCircles(circles);
+
+    _currentOverlays |= HOUGH_CIRCLES;
     // Display the updated image with circles
     _displayImage();
 }
