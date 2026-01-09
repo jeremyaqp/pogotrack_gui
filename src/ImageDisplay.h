@@ -27,6 +27,7 @@ public:
     void setLabelCirc() const;
     void showConnectedComponents(const cv::Mat &stats,
                                            const cv::Mat &centroids);
+    void hideConnectedComponents();
     leftClicToolType leftClicTool = DRAW_LINE;
 
     void resetLine(){

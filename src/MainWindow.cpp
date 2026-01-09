@@ -231,8 +231,21 @@ void MainWindow::_displayImage()
         cv::cvtColor(_currentImage, rgb, cv::COLOR_GRAY2RGB);
     else
         cv::cvtColor(_currentImage, rgb, cv::COLOR_BGR2RGB);
-
+    _display->hideConnectedComponents();
     _display->setImage(_currentImage);
+}
+
+
+void MainWindow::_displayImage(cv::Mat img)
+{
+    if(img.empty()) return;
+    cv::Mat rgb;
+    if (img.channels() == 1)
+        cv::cvtColor(img, rgb, cv::COLOR_GRAY2RGB);
+    else
+        cv::cvtColor(img, rgb, cv::COLOR_BGR2RGB);
+
+    _display->setImage(img);
 }
 
 
@@ -290,8 +303,8 @@ void MainWindow::connectedComponentsMode()
     cv::Mat labels, stats, centroids;
     int n = cv::connectedComponentsWithStats(binImg, labels, stats, centroids);
 
-    // Create a color output where each component has a different color
-    _currentImage = cv::Mat::zeros(labels.size(), CV_8UC3);
+    // Create a color output where each component has a different color, for display purpose
+    cv::Mat coloredLabels = cv::Mat::zeros(labels.size(), CV_8UC3);
     cv::RNG rng(12345);
 
     std::vector<cv::Vec3b> colors(n);
@@ -301,13 +314,12 @@ void MainWindow::connectedComponentsMode()
 
     for (int y = 0; y < labels.rows; y++)
         for (int x = 0; x < labels.cols; x++)
-            _currentImage.at<cv::Vec3b>(y,x) = colors[ labels.at<int>(y,x) ];
-
-    // Tell ImageDisplay to draw centroids + areas on top
-    _display->showConnectedComponents(stats, centroids);
+            coloredLabels.at<cv::Vec3b>(y,x) = colors[ labels.at<int>(y,x) ];
 
     // Show the updated colored image
-    _displayImage();
+    _displayImage(coloredLabels);
+    // Tell ImageDisplay to draw centroids + areas on top
+    _display->showConnectedComponents(stats, centroids);
 }
 
 void MainWindow::applyMask()

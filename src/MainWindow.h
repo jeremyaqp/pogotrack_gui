@@ -55,6 +55,7 @@ private:
     void _setupUI();
     void _loadImage();
     void _displayImage();
+    void _displayImage(cv::Mat img);
 
     QSlider* _binThreshold;
     double _imgScale = 1.0;

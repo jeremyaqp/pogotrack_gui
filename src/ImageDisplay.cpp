@@ -325,6 +325,11 @@ void ImageDisplay::showConnectedComponents(const cv::Mat &stats,
     update();  // triggers paintEvent
 }
 
+void ImageDisplay::hideConnectedComponents(){
+    _drawCC = false;
+    update();
+}
+
 cv::Mat ImageDisplay::getMaskFromTool() const{
     if (qimg.isNull())
         return cv::Mat();
