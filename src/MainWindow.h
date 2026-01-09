@@ -11,6 +11,7 @@
 #include <QScrollArea>
 #include <opencv2/opencv.hpp>
 #include <QDoubleSpinBox>
+#include <QShortcut>
 #include "ImageDisplay.h"
 
 #define CONNECTED_COMPONENTS 0x01
@@ -57,8 +58,8 @@ private:
 
     void _setupUI();
     void _loadImage();
-    void _displayImage();
-    void _displayImage(cv::Mat img);
+    void _displayImage(bool addToStack = true);
+    void _displayImage(cv::Mat img, bool addToStack = true);
 
     uint8_t _currentOverlays = 0;
     cv::Mat _ccstats;
@@ -83,9 +84,14 @@ private:
     QLineEdit *adaptCEdit;
     QLineEdit *adaptBlockSizeEdit;
 
+    std::vector<cv::Mat> _displayedImageStack;
+    std::vector<uint8_t> _overlayStack;
+    int _stackIndex = -1; // Allows undo functionality
+
 private slots:
     void resetImage();
     void applyThreshold();
+    void validateThreshold();
     void connectedComponentsMode();
     void applyMask();
     void getHoughParams();

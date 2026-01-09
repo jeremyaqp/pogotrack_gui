@@ -176,6 +176,7 @@ void MainWindow::_setupUI()
     // ---- Connect buttons ----
     connect(browse, &QPushButton::clicked, this, &MainWindow::_loadImage);
     connect(_binThreshold, &QSlider::valueChanged, this, &MainWindow::applyThreshold);
+    connect(_binThreshold, &QSlider::sliderReleased, this, &MainWindow::validateThreshold);
     connect(resetBtn, &QPushButton::clicked, this, &MainWindow::resetImage);
     connect(ccBtn, &QPushButton::clicked, this, &MainWindow::connectedComponentsMode);
     connect(applyMaskBtn, &QPushButton::clicked, this, &MainWindow::applyMask);
@@ -207,6 +208,26 @@ void MainWindow::_setupUI()
         }
     });
 
+    // ---- Shortcuts ----
+    QShortcut *undoShortcut = new QShortcut(QKeySequence(QKeySequence::Undo), this);
+    connect(undoShortcut, &QShortcut::activated, this, [=]() {
+        if (_stackIndex > 0) {
+            _stackIndex--;
+            _currentImage = _displayedImageStack[_stackIndex];
+            _currentOverlays = _overlayStack[_stackIndex];
+            _displayImage(false);
+        }
+    });
+    QShortcut *redoShortcut = new QShortcut(QKeySequence(QKeySequence::Redo), this);
+    connect(redoShortcut, &QShortcut::activated, this, [=]() {
+        if (_stackIndex + 1 < static_cast<int>(_displayedImageStack.size())) {
+            _stackIndex++;
+            _currentImage = _displayedImageStack[_stackIndex];
+            _currentOverlays = _overlayStack[_stackIndex];
+            _displayImage(false);
+        }
+    });
+
 }
 
 void MainWindow::_loadImage()
@@ -223,13 +244,13 @@ void MainWindow::_loadImage()
     _displayImage();
 }
 
-void MainWindow::_displayImage()
+void MainWindow::_displayImage(bool addToStack)
 {
-    _displayImage(_currentImage);
+    _displayImage(_currentImage, addToStack);
 }
 
 
-void MainWindow::_displayImage(cv::Mat img)
+void MainWindow::_displayImage(cv::Mat img, bool addToStack)
 {
     if(img.empty()) return;
     cv::Mat rgb;
@@ -248,6 +269,20 @@ void MainWindow::_displayImage(cv::Mat img)
         _display->hideHoughCircles();
 
     _display->setImage(img);
+    if(!addToStack) return;
+    _stackIndex++;
+    // Store in stack
+    if(_stackIndex < static_cast<int>(_displayedImageStack.size())){
+        _displayedImageStack[_stackIndex] = img.clone();
+        _overlayStack[_stackIndex] = _currentOverlays;
+        // Remove any redo history
+        _displayedImageStack.resize(_stackIndex + 1);
+        _overlayStack.resize(_stackIndex + 1);
+        printf("Resized stack to %zu\n", _displayedImageStack.size());
+    } else {
+        _displayedImageStack.push_back(img.clone());
+        _overlayStack.push_back(_currentOverlays);
+    }
 }
 
 
@@ -272,8 +307,14 @@ void MainWindow::applyThreshold()
     }
     _currentOverlays = 0; // reset overlays
     // 3) Display
-    _displayImage();
+    _displayImage(false);
     _threshValueLabel->setText("Threshold : " + QString::number((int)thres));
+}
+
+
+void MainWindow::validateThreshold()
+{
+    _displayImage(true);
 }
 
 void MainWindow::resetImage()
@@ -281,6 +322,9 @@ void MainWindow::resetImage()
     _currentImage = _originalImage.clone();
     _currentMask = cv::Mat();
     _currentOverlays = 0;
+    _stackIndex = -1;
+    _displayedImageStack.clear();
+    _overlayStack.clear();
     _displayImage();
 }
 
