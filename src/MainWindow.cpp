@@ -8,6 +8,9 @@
 #include <QMessageBox>
 #include <QApplication>
 #include <QGroupBox>
+#include "collapsible/Section.h"
+
+using namespace ui;
 
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
@@ -25,12 +28,13 @@ void MainWindow::_setupUI()
     QWidget *centralWidget = new QWidget;
     QHBoxLayout *mainLayout = new QHBoxLayout;
     _display = new ImageDisplay;
-    _display->setMinimumSize(640, 480);
+    _display->setMinimumSize(320, 240);
     setCentralWidget(_display);
 
     _sidePanel = new QWidget;
     _sideLayout = new QVBoxLayout;
 
+    // ################################################################# Sidebar elements
     QPushButton *browse         = new QPushButton("Open test image");
     QRadioButton *lineToolBtn   = new QRadioButton("Line");
     QRadioButton *rectToolBtn   = new QRadioButton("Rectangle");
@@ -39,7 +43,7 @@ void MainWindow::_setupUI()
     QPushButton *resetBtn       = new QPushButton("Reset");
     QPushButton *ccBtn          = new QPushButton("Connected Components");
     QPushButton *houghBtn       = new QPushButton("Hough Circles");
-    QPushButton *adaptBtn       = new QPushButton("Adaptative Threshold");
+    QPushButton *adaptBtn       = new QPushButton("Adaptive Threshold");
 
     dpEdit                     = new QLineEdit("1.0");
     minDistEdit                = new QLineEdit("20.0");
@@ -59,7 +63,7 @@ void MainWindow::_setupUI()
     _binThreshold->setValue(255);
     _binThreshold->setSingleStep(1.0);  // optional
 
-    // ---- Import ----
+    // ################################################################# Import
     QLabel *importLabel = new QLabel("Import");
     importLabel->setStyleSheet("font-weight: bold; font-size: 14px;");
     _sideLayout->addWidget(importLabel);
@@ -67,7 +71,7 @@ void MainWindow::_setupUI()
     _sideLayout->addWidget(browse);
     _sideLayout->addSpacing(8);   // Space after category
 
-    // ---- Tools ----
+    // ################################################################# Tools
     QLabel *maskLabel = new QLabel("Measuring Tools");
     maskLabel->setStyleSheet("font-weight: bold; font-size: 14px;");
     _sideLayout->addWidget(maskLabel);
@@ -85,7 +89,7 @@ void MainWindow::_setupUI()
     _sideLayout->addWidget(applyMaskBtn);
     _sideLayout->addSpacing(8);
 
-    // ---- Operations ----
+    // ################################################################# Operations
     QLabel *operationLabel = new QLabel("Operations");
     operationLabel->setStyleSheet("font-weight: bold; font-size: 14px;");
     _sideLayout->addWidget(operationLabel);
@@ -96,9 +100,9 @@ void MainWindow::_setupUI()
     _sideLayout->addWidget(_binThreshold);
     _sideLayout->addWidget(ccBtn);
 
-    QGroupBox *houghGroup = new QGroupBox(this);
-    QVBoxLayout *houghVbox = new QVBoxLayout;
 
+    // ---------------------------------------- Hough Circles
+    QVBoxLayout *houghVbox = new QVBoxLayout;
     houghVbox->addWidget(houghBtn);
     // Helper lambda to add a label and input on the same line
     auto addLabelAndInputHough = [&](const QString &text, QLineEdit *edit) {
@@ -107,8 +111,8 @@ void MainWindow::_setupUI()
         hLayout->addWidget(edit);
         houghVbox->addLayout(hLayout);
     };
-    houghGroup->setLayout(houghVbox);
-    _sideLayout->addLayout(houghVbox);
+
+    Section* HoughSection = new Section("Hough Circles", 300, this);
 
     // Add all Hough parameters
     addLabelAndInputHough("dp:", dpEdit);
@@ -117,9 +121,10 @@ void MainWindow::_setupUI()
     addLabelAndInputHough("param2:", param2Edit);
     addLabelAndInputHough("minRadius:", minRadiusEdit);
     addLabelAndInputHough("maxRadius:", maxRadiusEdit);
-    _sideLayout->addWidget(houghGroup);
+    HoughSection->setContentLayout(*houghVbox);
+    _sideLayout->addWidget(HoughSection);
 
-    QGroupBox *adaptativeGroup = new QGroupBox(this);
+    // ---------------------------------------- Adaptive Threshold
     QVBoxLayout *adaptativeVBox = new QVBoxLayout;
     adaptativeVBox->addWidget(adaptBtn);
     auto addLabelAndInputAdaptative = [&](const QString &text, QLineEdit *edit) {
@@ -128,8 +133,7 @@ void MainWindow::_setupUI()
         hLayout->addWidget(edit);
         adaptativeVBox->addLayout(hLayout);
     };
-    adaptativeGroup->setLayout(adaptativeVBox);
-    _sideLayout->addLayout(adaptativeVBox);
+    Section* AdaptiveSection = new Section("Adaptive Threshold", 300, this);
 
     QButtonGroup *adaptMethodGroup = new QButtonGroup(this);
     adaptMethodGroup->addButton(meanCBtn);
@@ -140,11 +144,14 @@ void MainWindow::_setupUI()
     meanCBtn->setChecked(true); // default
     addLabelAndInputAdaptative("C:", adaptCEdit);
     addLabelAndInputAdaptative("Block size:", adaptBlockSizeEdit);
-    _sideLayout->addWidget(adaptativeGroup);
+    AdaptiveSection->setContentLayout(*adaptativeVBox);
+    _sideLayout->addWidget(AdaptiveSection);
+
+    // ---------------------------------------- 
 
     _sideLayout->addWidget(resetBtn);
 
-    // ---- Licencing ----
+    // ################################################################# License
     QWidget *bottomRightBox = new QWidget;
     QVBoxLayout *brLayout = new QVBoxLayout(bottomRightBox);
     brLayout->setContentsMargins(0,0,0,0);
@@ -163,7 +170,7 @@ void MainWindow::_setupUI()
     _sideLayout->addStretch();  // push everything up
     _sideLayout->addWidget(bottomRightBox, 0, Qt::AlignLeft | Qt::AlignBottom);
 
-    // ---- Global ----
+    // ################################################################# General layout
     _sidePanel->setLayout(_sideLayout);
     _sidePanel->setFixedWidth(200);
 
@@ -173,7 +180,7 @@ void MainWindow::_setupUI()
     centralWidget->setLayout(mainLayout);
     setCentralWidget(centralWidget);
 
-    // ---- Connect buttons ----
+    // ################################################################# Connections
     connect(browse, &QPushButton::clicked, this, &MainWindow::_loadImage);
     connect(_binThreshold, &QSlider::valueChanged, this, &MainWindow::applyThreshold);
     connect(_binThreshold, &QSlider::sliderReleased, this, &MainWindow::validateThreshold);
@@ -208,7 +215,7 @@ void MainWindow::_setupUI()
         }
     });
 
-    // ---- Shortcuts ----
+    // ################################################################# Shortcuts
     QShortcut *undoShortcut = new QShortcut(QKeySequence(QKeySequence::Undo), this);
     connect(undoShortcut, &QShortcut::activated, this, [=]() {
         if (_stackIndex > 0) {
