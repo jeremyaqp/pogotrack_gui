@@ -8,6 +8,7 @@
 #include <QMessageBox>
 #include <QApplication>
 #include <QGroupBox>
+#include <QScrollArea>
 #include "collapsible/Section.h"
 
 using namespace ui;
@@ -35,6 +36,7 @@ void MainWindow::_setupUI()
     _sideLayout = new QVBoxLayout;
 
     // ################################################################# Sidebar elements
+    QScrollArea* scrollArea     = new QScrollArea();
     QPushButton *browse         = new QPushButton("Open test image");
     QRadioButton *lineToolBtn   = new QRadioButton("Line");
     QRadioButton *rectToolBtn   = new QRadioButton("Rectangle");
@@ -175,7 +177,9 @@ void MainWindow::_setupUI()
     _sidePanel->setFixedWidth(200);
 
     mainLayout->addWidget(_display, 1);
-    mainLayout->addWidget(_sidePanel);
+    scrollArea->setWidget(_sidePanel);
+    scrollArea->setWidgetResizable(true);
+    mainLayout->addWidget(scrollArea);
 
     centralWidget->setLayout(mainLayout);
     setCentralWidget(centralWidget);
