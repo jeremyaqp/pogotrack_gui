@@ -34,32 +34,8 @@ void MainWindow::_setupUI()
 
     _sidePanel = new QWidget;
     _sideLayout = new QVBoxLayout;
-
-    // ################################################################# Sidebar elements
     QScrollArea* scrollArea     = new QScrollArea();
-    QPushButton *browse         = new QPushButton("Open test image");
-    QRadioButton *lineToolBtn   = new QRadioButton("Line");
-    QRadioButton *rectToolBtn   = new QRadioButton("Rectangle");
-    QRadioButton *circToolBtn   = new QRadioButton("Circle");
-    QPushButton *applyMaskBtn   = new QPushButton("Apply Mask");
-    QPushButton *resetBtn       = new QPushButton("Reset");
-    QPushButton *ccBtn          = new QPushButton("Connected Components");
-    QPushButton *houghBtn       = new QPushButton("Hough Circles");
-    QPushButton *adaptBtn       = new QPushButton("Adaptive Threshold");
 
-    _HoughDpEdit                      = new QLineEdit("1.0");
-    _HoughMinDistEdit                 = new QLineEdit("20.0");
-    _HoughParam1Edit                  = new QLineEdit("10");
-    _HoughParam2Edit                  = new QLineEdit("14");
-    _HoughMinRadiusEdit               = new QLineEdit("40");
-    _HoughMaxRadiusEdit               = new QLineEdit("60");
-
-    _AdaptiveMeanCBtn                    = new QRadioButton("Mean C");
-    _AdaptiveGaussianCBtn                = new QRadioButton("Gaussian C");
-    _AdaptiveCEdit                  = new QLineEdit("-10.0");
-    _AdaptiveBlocksizeEdit          = new QLineEdit("11");
-
-    _binThreshold               = new QSlider(this);
     // Helper function for thresholds
     auto configThreshold = [&](QSlider* sl){
         sl->setOrientation(Qt::Horizontal);
@@ -67,13 +43,13 @@ void MainWindow::_setupUI()
         sl->setValue(0);
         sl->setSingleStep(1.0);
     };
-    configThreshold(_binThreshold);
 
     // ################################################################# Import
     QLabel *importLabel = new QLabel("Import");
     importLabel->setStyleSheet("font-weight: bold; font-size: 14px;");
     _sideLayout->addWidget(importLabel);
 
+    QPushButton *browse = new QPushButton("Open test image");
     _sideLayout->addWidget(browse);
     _sideLayout->addSpacing(8);   // Space after category
 
@@ -82,7 +58,10 @@ void MainWindow::_setupUI()
     maskLabel->setStyleSheet("font-weight: bold; font-size: 14px;");
     _sideLayout->addWidget(maskLabel);
 
-    QButtonGroup *toolGroup = new QButtonGroup(this);
+    QButtonGroup *toolGroup     = new QButtonGroup(this);
+    QRadioButton *lineToolBtn   = new QRadioButton("Line");
+    QRadioButton *rectToolBtn   = new QRadioButton("Rectangle");
+    QRadioButton *circToolBtn   = new QRadioButton("Circle");
     toolGroup->addButton(lineToolBtn);
     toolGroup->addButton(rectToolBtn);
     toolGroup->addButton(circToolBtn);
@@ -92,6 +71,8 @@ void MainWindow::_setupUI()
     _sideLayout->addWidget(lineToolBtn);
     _sideLayout->addWidget(rectToolBtn);
     _sideLayout->addWidget(circToolBtn);
+
+    QPushButton *applyMaskBtn = new QPushButton("Apply Mask");
     _sideLayout->addWidget(applyMaskBtn);
     _sideLayout->addSpacing(8);
 
@@ -100,15 +81,22 @@ void MainWindow::_setupUI()
     operationLabel->setStyleSheet("font-weight: bold; font-size: 14px;");
     _sideLayout->addWidget(operationLabel);
 
+    // ---------------------------------------- Bin Threshold
     _threshValueLabel = new QLabel("Binary Threshold : 0");
-
     _sideLayout->addWidget(_threshValueLabel);
-    _sideLayout->addWidget(_binThreshold);
-    _sideLayout->addWidget(ccBtn);
 
+    _binThreshold = new QSlider(this);
+    _sideLayout->addWidget(_binThreshold);
+    configThreshold(_binThreshold);
+
+    // ---------------------------------------- Connected Components
+
+    QPushButton *ccBtn = new QPushButton("Connected Components");
+    _sideLayout->addWidget(ccBtn);
 
     // ---------------------------------------- Hough Circles
     QVBoxLayout *houghVbox = new QVBoxLayout;
+    QPushButton *houghBtn  = new QPushButton("Hough Circles");
     houghVbox->addWidget(houghBtn);
     // Helper lambda to add a label and input on the same line
     auto addLabelAndInputHough = [&](const QString &text, QLineEdit *edit) {
@@ -120,7 +108,13 @@ void MainWindow::_setupUI()
 
     Section* HoughSection = new Section("Hough Circles", 300, this);
 
-    // Add all Hough parameters
+    _HoughDpEdit                = new QLineEdit("1.0");
+    _HoughMinDistEdit           = new QLineEdit("20.0");
+    _HoughParam1Edit            = new QLineEdit("10");
+    _HoughParam2Edit            = new QLineEdit("14");
+    _HoughMinRadiusEdit         = new QLineEdit("40");
+    _HoughMaxRadiusEdit         = new QLineEdit("60");
+
     addLabelAndInputHough("dp:", _HoughDpEdit);
     addLabelAndInputHough("minDist:", _HoughMinDistEdit);
     addLabelAndInputHough("param1:", _HoughParam1Edit);
@@ -132,6 +126,7 @@ void MainWindow::_setupUI()
 
     // ---------------------------------------- Adaptive Threshold
     QVBoxLayout *adaptativeVBox = new QVBoxLayout;
+    QPushButton *adaptBtn       = new QPushButton("Adaptive Threshold");
     adaptativeVBox->addWidget(adaptBtn);
     auto addLabelAndInputAdaptative = [&](const QString &text, QLineEdit *edit) {
         QHBoxLayout *hLayout = new QHBoxLayout();
@@ -140,6 +135,11 @@ void MainWindow::_setupUI()
         adaptativeVBox->addLayout(hLayout);
     };
     Section* AdaptiveSection = new Section("Adaptive Threshold", 300, this);
+
+    _AdaptiveMeanCBtn           = new QRadioButton("Mean C");
+    _AdaptiveGaussianCBtn       = new QRadioButton("Gaussian C");
+    _AdaptiveCEdit              = new QLineEdit("-10.0");
+    _AdaptiveBlocksizeEdit      = new QLineEdit("11");
 
     QButtonGroup *adaptMethodGroup = new QButtonGroup(this);
     adaptMethodGroup->addButton(_AdaptiveMeanCBtn);
@@ -154,7 +154,7 @@ void MainWindow::_setupUI()
     _sideLayout->addWidget(AdaptiveSection);
 
 
-    // ---------------------------------------- Special Thresholds
+    // ---------------------------------------- RGB Thresholds
     QVBoxLayout *spThreshVBox = new QVBoxLayout;
     Section* spThreshSection = new Section("RGB Thresholds", 300, this);
     spThreshSection->setToolTip("Apply TOZERO or TOZERO_INV separately on each channel");
@@ -193,8 +193,9 @@ void MainWindow::_setupUI()
     spThreshSection->setContentLayout(*spThreshVBox);
     _sideLayout->addWidget(spThreshSection);
 
-    // ---------------------------------------- 
+    // ----------------------------------------  Reset
 
+    QPushButton *resetBtn       = new QPushButton("Reset");
     _sideLayout->addWidget(resetBtn);
 
     // ################################################################# License
