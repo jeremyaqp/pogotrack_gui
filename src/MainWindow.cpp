@@ -260,9 +260,9 @@ void MainWindow::_setupUI()
     connect(adaptBtn, &QPushButton::clicked, this, &MainWindow::applyAdaptativeThreshold);
     connect(adaptMethodGroup, &QButtonGroup::idClicked, this, [=](int id) {
         if (adaptMethodGroup->button(id) == meanCBtn ) {
-            _adaptParams.method = MEAN_C;
+            _adaptParams.method = cv::ADAPTIVE_THRESH_MEAN_C;
         } else {
-            _adaptParams.method = GAUSSIAN_C;
+            _adaptParams.method = cv::ADAPTIVE_THRESH_GAUSSIAN_C;
         }
     });
 
@@ -442,6 +442,29 @@ void MainWindow::resetImage()
     _stackIndex = -1;
     _displayedImageStack.clear();
     _overlayStack.clear();
+    dpEdit->setText(QString::number(DEFAULT_HOUGH_DP));
+    minDistEdit->setText(QString::number(DEFAULT_HOUGH_MIN_DIST));
+    param1Edit->setText(QString::number(DEFAULT_HOUGH_PARAM1));
+    param2Edit->setText(QString::number(DEFAULT_HOUGH_PARAM2));
+    minRadiusEdit->setText(QString::number(DEFAULT_HOUGH_MIN_RADIUS));
+    maxRadiusEdit->setText(QString::number(DEFAULT_HOUGH_MAX_RADIUS));
+    DEFAULT_ADAPT_METHOD == cv::ADAPTIVE_THRESH_MEAN_C ? meanCBtn->setChecked(true) : gaussianCBtn->setChecked(true);
+    adaptCEdit->setText(QString::number(DEFAULT_ADAPT_C));
+    adaptBlockSizeEdit->setText(QString::number(DEFAULT_ADAPT_BLOCK_SIZE));
+
+    _binThreshold->setValue(0);
+    _binThreshold_R->setValue(0);
+    _binThreshold_G->setValue(0);
+    _binThreshold_B->setValue(0);
+    _invertThresholdR->setChecked(false);
+    _invertThresholdG->setChecked(false);
+    _invertThresholdB->setChecked(false);
+
+    _threshValueLabel->setText("Binary Threshold : 0");
+    _threshValueLabel_R->setText("Red Threshold : 0");
+    _threshValueLabel_G->setText("Green Threshold : 0");
+    _threshValueLabel_B->setText("Blue Threshold : 0");
+
     _displayImage();
 }
 
@@ -563,11 +586,10 @@ void MainWindow::applyAdaptativeThreshold()
     int blockSize = adaptBlockSizeEdit->text().toInt();
     if (blockSize % 2 == 0) blockSize += 1; // must be odd
     double C = adaptCEdit->text().toDouble();
-    int method = (_adaptParams.method == MEAN_C) ? cv::ADAPTIVE_THRESH_MEAN_C : cv::ADAPTIVE_THRESH_GAUSSIAN_C;
 
     QApplication::setOverrideCursor(Qt::WaitCursor);
     try {
-        cv::adaptiveThreshold(maxGray, _currentImage, 255, method,
+        cv::adaptiveThreshold(maxGray, _currentImage, 255, _adaptParams.method,
                             cv::THRESH_BINARY, blockSize, C);
     } catch (const cv::Exception &e) {
         QMessageBox::critical(this, "Adaptative Threshold Error",

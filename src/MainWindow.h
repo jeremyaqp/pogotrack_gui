@@ -18,10 +18,15 @@
 #define CONNECTED_COMPONENTS 0x01
 #define HOUGH_CIRCLES        0x02
 
-enum adaptativeMethod {
-    MEAN_C,
-    GAUSSIAN_C
-};
+#define DEFAULT_HOUGH_DP 1.0
+#define DEFAULT_HOUGH_MIN_DIST 20.0
+#define DEFAULT_HOUGH_PARAM1 10.0
+#define DEFAULT_HOUGH_PARAM2 14.0
+#define DEFAULT_HOUGH_MIN_RADIUS 40
+#define DEFAULT_HOUGH_MAX_RADIUS 60
+#define DEFAULT_ADAPT_METHOD cv::ADAPTIVE_THRESH_MEAN_C
+#define DEFAULT_ADAPT_BLOCK_SIZE 11
+#define DEFAULT_ADAPT_C -10.0
 
 struct HoughParams {
     double dp;
@@ -34,7 +39,7 @@ struct HoughParams {
 
 
 struct AdaptativeParams {
-    adaptativeMethod method;
+    int method;
     int blockSize;
     double C;
 };
@@ -68,10 +73,9 @@ private:
     std::vector<cv::Vec3f> _HoughCircles;
 
     QSlider* _binThreshold;
-    double _imgScale = 1.0;
 
-    HoughParams _params = {1.0, 20.0, 10.0, 14.0, 40, 60};
-    AdaptativeParams _adaptParams = {MEAN_C, 11, -10.0};
+    HoughParams _params = {DEFAULT_HOUGH_DP, DEFAULT_HOUGH_MIN_DIST, DEFAULT_HOUGH_PARAM1, DEFAULT_HOUGH_PARAM2, DEFAULT_HOUGH_MIN_RADIUS, DEFAULT_HOUGH_MAX_RADIUS};
+    AdaptativeParams _adaptParams = {DEFAULT_ADAPT_METHOD, DEFAULT_ADAPT_BLOCK_SIZE, DEFAULT_ADAPT_C};
 
     QLineEdit *dpEdit;
     QLineEdit *minDistEdit;
