@@ -47,17 +47,17 @@ void MainWindow::_setupUI()
     QPushButton *houghBtn       = new QPushButton("Hough Circles");
     QPushButton *adaptBtn       = new QPushButton("Adaptive Threshold");
 
-    dpEdit                     = new QLineEdit("1.0");
-    minDistEdit                = new QLineEdit("20.0");
-    param1Edit                 = new QLineEdit("10");
-    param2Edit                 = new QLineEdit("14");
-    minRadiusEdit              = new QLineEdit("40");
-    maxRadiusEdit              = new QLineEdit("60");
+    _HoughDpEdit                      = new QLineEdit("1.0");
+    _HoughMinDistEdit                 = new QLineEdit("20.0");
+    _HoughParam1Edit                  = new QLineEdit("10");
+    _HoughParam2Edit                  = new QLineEdit("14");
+    _HoughMinRadiusEdit               = new QLineEdit("40");
+    _HoughMaxRadiusEdit               = new QLineEdit("60");
 
-    meanCBtn                   = new QRadioButton("Mean C");
-    gaussianCBtn               = new QRadioButton("Gaussian C");
-    adaptCEdit                 = new QLineEdit("-10.0");
-    adaptBlockSizeEdit         = new QLineEdit("11");
+    _AdaptiveMeanCBtn                    = new QRadioButton("Mean C");
+    _AdaptiveGaussianCBtn                = new QRadioButton("Gaussian C");
+    _AdaptiveCEdit                  = new QLineEdit("-10.0");
+    _AdaptiveBlocksizeEdit          = new QLineEdit("11");
 
     _binThreshold               = new QSlider(this);
     // Helper function for thresholds
@@ -121,12 +121,12 @@ void MainWindow::_setupUI()
     Section* HoughSection = new Section("Hough Circles", 300, this);
 
     // Add all Hough parameters
-    addLabelAndInputHough("dp:", dpEdit);
-    addLabelAndInputHough("minDist:", minDistEdit);
-    addLabelAndInputHough("param1:", param1Edit);
-    addLabelAndInputHough("param2:", param2Edit);
-    addLabelAndInputHough("minRadius:", minRadiusEdit);
-    addLabelAndInputHough("maxRadius:", maxRadiusEdit);
+    addLabelAndInputHough("dp:", _HoughDpEdit);
+    addLabelAndInputHough("minDist:", _HoughMinDistEdit);
+    addLabelAndInputHough("param1:", _HoughParam1Edit);
+    addLabelAndInputHough("param2:", _HoughParam2Edit);
+    addLabelAndInputHough("minRadius:", _HoughMinRadiusEdit);
+    addLabelAndInputHough("maxRadius:", _HoughMaxRadiusEdit);
     HoughSection->setContentLayout(*houghVbox);
     _sideLayout->addWidget(HoughSection);
 
@@ -142,14 +142,14 @@ void MainWindow::_setupUI()
     Section* AdaptiveSection = new Section("Adaptive Threshold", 300, this);
 
     QButtonGroup *adaptMethodGroup = new QButtonGroup(this);
-    adaptMethodGroup->addButton(meanCBtn);
-    adaptMethodGroup->addButton(gaussianCBtn);
+    adaptMethodGroup->addButton(_AdaptiveMeanCBtn);
+    adaptMethodGroup->addButton(_AdaptiveGaussianCBtn);
     adaptMethodGroup->setExclusive(true);
-    adaptativeVBox->addWidget(meanCBtn);
-    adaptativeVBox->addWidget(gaussianCBtn);
-    meanCBtn->setChecked(true); // default
-    addLabelAndInputAdaptative("C:", adaptCEdit);
-    addLabelAndInputAdaptative("Block size:", adaptBlockSizeEdit);
+    adaptativeVBox->addWidget(_AdaptiveMeanCBtn);
+    adaptativeVBox->addWidget(_AdaptiveGaussianCBtn);
+    _AdaptiveMeanCBtn->setChecked(true); // default
+    addLabelAndInputAdaptative("C:", _AdaptiveCEdit);
+    addLabelAndInputAdaptative("Block size:", _AdaptiveBlocksizeEdit);
     AdaptiveSection->setContentLayout(*adaptativeVBox);
     _sideLayout->addWidget(AdaptiveSection);
 
@@ -159,19 +159,19 @@ void MainWindow::_setupUI()
     Section* spThreshSection = new Section("RGB Thresholds", 300, this);
     spThreshSection->setToolTip("Apply TOZERO or TOZERO_INV separately on each channel");
 
-    _threshValueLabel_R   = new QLabel("Red Threshold : 0");
-    _threshValueLabel_G   = new QLabel("Green Threshold : 0");
-    _threshValueLabel_B   = new QLabel("Blue Threshold : 0");
-    _binThreshold_R       = new QSlider(this);
-    _binThreshold_G       = new QSlider(this);
-    _binThreshold_B       = new QSlider(this);
+    _threshValueLabel_R    = new QLabel("Red Threshold : 0");
+    _threshValueLabel_G    = new QLabel("Green Threshold : 0");
+    _threshValueLabel_B    = new QLabel("Blue Threshold : 0");
+    _binThreshold_R        = new QSlider(this);
+    _binThreshold_G        = new QSlider(this);
+    _binThreshold_B        = new QSlider(this);
     QHBoxLayout * hGroup_R = new QHBoxLayout();
     QHBoxLayout * hGroup_G = new QHBoxLayout();
     QHBoxLayout * hGroup_B = new QHBoxLayout();
 
-    _invertThresholdR = new QCheckBox("Invert");
-    _invertThresholdG = new QCheckBox("Invert");
-    _invertThresholdB = new QCheckBox("Invert");
+    _invertThresholdR      = new QCheckBox("Invert");
+    _invertThresholdG      = new QCheckBox("Invert");
+    _invertThresholdB      = new QCheckBox("Invert");
 
     spThreshVBox->addWidget(_threshValueLabel_R);
     hGroup_R->addWidget(_binThreshold_R);
@@ -250,16 +250,16 @@ void MainWindow::_setupUI()
         }
     });
     connect(houghBtn, &QPushButton::clicked, this, &MainWindow::applyHoughCircles);
-    connect(dpEdit, &QLineEdit::editingFinished, this, &MainWindow::getHoughParams);
-    connect(minDistEdit, &QLineEdit::editingFinished, this, &MainWindow::getHoughParams);
-    connect(param1Edit, &QLineEdit::editingFinished, this, &MainWindow::getHoughParams);
-    connect(param2Edit, &QLineEdit::editingFinished, this, &MainWindow::getHoughParams);
-    connect(minRadiusEdit, &QLineEdit::editingFinished, this, &MainWindow::getHoughParams);
-    connect(maxRadiusEdit, &QLineEdit::editingFinished, this, &MainWindow::getHoughParams);
+    connect(_HoughDpEdit, &QLineEdit::editingFinished, this, &MainWindow::getHoughParams);
+    connect(_HoughMinDistEdit, &QLineEdit::editingFinished, this, &MainWindow::getHoughParams);
+    connect(_HoughParam1Edit, &QLineEdit::editingFinished, this, &MainWindow::getHoughParams);
+    connect(_HoughParam2Edit, &QLineEdit::editingFinished, this, &MainWindow::getHoughParams);
+    connect(_HoughMinRadiusEdit, &QLineEdit::editingFinished, this, &MainWindow::getHoughParams);
+    connect(_HoughMaxRadiusEdit, &QLineEdit::editingFinished, this, &MainWindow::getHoughParams);
 
     connect(adaptBtn, &QPushButton::clicked, this, &MainWindow::applyAdaptativeThreshold);
     connect(adaptMethodGroup, &QButtonGroup::idClicked, this, [=](int id) {
-        if (adaptMethodGroup->button(id) == meanCBtn ) {
+        if (adaptMethodGroup->button(id) == _AdaptiveMeanCBtn ) {
             _adaptParams.method = cv::ADAPTIVE_THRESH_MEAN_C;
         } else {
             _adaptParams.method = cv::ADAPTIVE_THRESH_GAUSSIAN_C;
@@ -442,15 +442,15 @@ void MainWindow::resetImage()
     _stackIndex = -1;
     _displayedImageStack.clear();
     _overlayStack.clear();
-    dpEdit->setText(QString::number(DEFAULT_HOUGH_DP));
-    minDistEdit->setText(QString::number(DEFAULT_HOUGH_MIN_DIST));
-    param1Edit->setText(QString::number(DEFAULT_HOUGH_PARAM1));
-    param2Edit->setText(QString::number(DEFAULT_HOUGH_PARAM2));
-    minRadiusEdit->setText(QString::number(DEFAULT_HOUGH_MIN_RADIUS));
-    maxRadiusEdit->setText(QString::number(DEFAULT_HOUGH_MAX_RADIUS));
-    DEFAULT_ADAPT_METHOD == cv::ADAPTIVE_THRESH_MEAN_C ? meanCBtn->setChecked(true) : gaussianCBtn->setChecked(true);
-    adaptCEdit->setText(QString::number(DEFAULT_ADAPT_C));
-    adaptBlockSizeEdit->setText(QString::number(DEFAULT_ADAPT_BLOCK_SIZE));
+    _HoughDpEdit->setText(QString::number(DEFAULT_HOUGH_DP));
+    _HoughMinDistEdit->setText(QString::number(DEFAULT_HOUGH_MIN_DIST));
+    _HoughParam1Edit->setText(QString::number(DEFAULT_HOUGH_PARAM1));
+    _HoughParam2Edit->setText(QString::number(DEFAULT_HOUGH_PARAM2));
+    _HoughMinRadiusEdit->setText(QString::number(DEFAULT_HOUGH_MIN_RADIUS));
+    _HoughMaxRadiusEdit->setText(QString::number(DEFAULT_HOUGH_MAX_RADIUS));
+    DEFAULT_ADAPT_METHOD == cv::ADAPTIVE_THRESH_MEAN_C ? _AdaptiveMeanCBtn->setChecked(true) : _AdaptiveGaussianCBtn->setChecked(true);
+    _AdaptiveCEdit->setText(QString::number(DEFAULT_ADAPT_C));
+    _AdaptiveBlocksizeEdit->setText(QString::number(DEFAULT_ADAPT_BLOCK_SIZE));
 
     _binThreshold->setValue(0);
     _binThreshold_R->setValue(0);
@@ -522,12 +522,12 @@ void MainWindow::applyMask()
 
 void MainWindow::getHoughParams()
 {
-    _params.dp        = dpEdit->text().toDouble();
-    _params.minDist   = minDistEdit->text().toDouble();
-    _params.param1    = param1Edit->text().toDouble();
-    _params.param2    = param2Edit->text().toDouble();
-    _params.minRadius = minRadiusEdit->text().toInt();
-    _params.maxRadius = maxRadiusEdit->text().toInt();
+    _params.dp        = _HoughDpEdit->text().toDouble();
+    _params.minDist   = _HoughMinDistEdit->text().toDouble();
+    _params.param1    = _HoughParam1Edit->text().toDouble();
+    _params.param2    = _HoughParam2Edit->text().toDouble();
+    _params.minRadius = _HoughMinRadiusEdit->text().toInt();
+    _params.maxRadius = _HoughMaxRadiusEdit->text().toInt();
 }
 
 void MainWindow::applyHoughCircles()
@@ -583,9 +583,9 @@ void MainWindow::applyAdaptativeThreshold()
     cv::max(maxGray, ch[2], maxGray);
 
     // 2) Apply adaptative threshold
-    int blockSize = adaptBlockSizeEdit->text().toInt();
+    int blockSize = _AdaptiveBlocksizeEdit->text().toInt();
     if (blockSize % 2 == 0) blockSize += 1; // must be odd
-    double C = adaptCEdit->text().toDouble();
+    double C = _AdaptiveCEdit->text().toDouble();
 
     QApplication::setOverrideCursor(Qt::WaitCursor);
     try {

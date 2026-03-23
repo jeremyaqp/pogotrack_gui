@@ -77,17 +77,17 @@ private:
     HoughParams _params = {DEFAULT_HOUGH_DP, DEFAULT_HOUGH_MIN_DIST, DEFAULT_HOUGH_PARAM1, DEFAULT_HOUGH_PARAM2, DEFAULT_HOUGH_MIN_RADIUS, DEFAULT_HOUGH_MAX_RADIUS};
     AdaptativeParams _adaptParams = {DEFAULT_ADAPT_METHOD, DEFAULT_ADAPT_BLOCK_SIZE, DEFAULT_ADAPT_C};
 
-    QLineEdit *dpEdit;
-    QLineEdit *minDistEdit;
-    QLineEdit *param1Edit;
-    QLineEdit *param2Edit;
-    QLineEdit *minRadiusEdit;
-    QLineEdit *maxRadiusEdit;
+    QLineEdit *_HoughDpEdit;
+    QLineEdit *_HoughMinDistEdit;
+    QLineEdit *_HoughParam1Edit;
+    QLineEdit *_HoughParam2Edit;
+    QLineEdit *_HoughMinRadiusEdit;
+    QLineEdit *_HoughMaxRadiusEdit;
 
-    QRadioButton *meanCBtn;
-    QRadioButton *gaussianCBtn;
-    QLineEdit *adaptCEdit;
-    QLineEdit *adaptBlockSizeEdit;
+    QRadioButton *_AdaptiveMeanCBtn;
+    QRadioButton *_AdaptiveGaussianCBtn;
+    QLineEdit *_AdaptiveCEdit;
+    QLineEdit *_AdaptiveBlocksizeEdit;
 
     std::vector<cv::Mat> _displayedImageStack;
     std::vector<uint8_t> _overlayStack;
