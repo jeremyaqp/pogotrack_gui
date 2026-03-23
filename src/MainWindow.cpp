@@ -60,10 +60,14 @@ void MainWindow::_setupUI()
     adaptBlockSizeEdit         = new QLineEdit("11");
 
     _binThreshold               = new QSlider(this);
-    _binThreshold->setOrientation(Qt::Horizontal);
-    _binThreshold->setRange(0, 255);
-    _binThreshold->setValue(255);
-    _binThreshold->setSingleStep(1.0);  // optional
+    // Helper function for thresholds
+    auto configThreshold = [&](QSlider* sl){
+        sl->setOrientation(Qt::Horizontal);
+        sl->setRange(0, 255);
+        sl->setValue(0);
+        sl->setSingleStep(1.0);
+    };
+    configThreshold(_binThreshold);
 
     // ################################################################# Import
     QLabel *importLabel = new QLabel("Import");
@@ -96,7 +100,7 @@ void MainWindow::_setupUI()
     operationLabel->setStyleSheet("font-weight: bold; font-size: 14px;");
     _sideLayout->addWidget(operationLabel);
 
-    _threshValueLabel = new QLabel("Threshold : 255");
+    _threshValueLabel = new QLabel("Binary Threshold : 0");
 
     _sideLayout->addWidget(_threshValueLabel);
     _sideLayout->addWidget(_binThreshold);
@@ -148,6 +152,45 @@ void MainWindow::_setupUI()
     addLabelAndInputAdaptative("Block size:", adaptBlockSizeEdit);
     AdaptiveSection->setContentLayout(*adaptativeVBox);
     _sideLayout->addWidget(AdaptiveSection);
+
+
+    // ---------------------------------------- Special Thresholds
+    QVBoxLayout *spThreshVBox = new QVBoxLayout;
+    Section* spThreshSection = new Section("Special Thresholds", 300, this);
+
+    _threshValueLabel_R   = new QLabel("Red Threshold : 0");
+    _threshValueLabel_G   = new QLabel("Green Threshold : 0");
+    _threshValueLabel_B   = new QLabel("Blue Threshold : 0");
+    _binThreshold_R       = new QSlider(this);
+    _binThreshold_G       = new QSlider(this);
+    _binThreshold_B       = new QSlider(this);
+    QHBoxLayout * hGroup_R = new QHBoxLayout();
+    QHBoxLayout * hGroup_G = new QHBoxLayout();
+    QHBoxLayout * hGroup_B = new QHBoxLayout();
+
+    _invertThresholdR = new QCheckBox("Invert");
+    _invertThresholdG = new QCheckBox("Invert");
+    _invertThresholdB = new QCheckBox("Invert");
+
+    spThreshVBox->addWidget(_threshValueLabel_R);
+    hGroup_R->addWidget(_binThreshold_R);
+    hGroup_R->addWidget(_invertThresholdR);
+    spThreshVBox->addLayout(hGroup_R);
+    spThreshVBox->addWidget(_threshValueLabel_G);
+    hGroup_G->addWidget(_binThreshold_G);
+    hGroup_G->addWidget(_invertThresholdG);
+    spThreshVBox->addLayout(hGroup_G);
+    spThreshVBox->addWidget(_threshValueLabel_B);
+    hGroup_B->addWidget(_binThreshold_B);
+    hGroup_B->addWidget(_invertThresholdB);
+    spThreshVBox->addLayout(hGroup_B);
+
+    configThreshold(_binThreshold_R);
+    configThreshold(_binThreshold_G);
+    configThreshold(_binThreshold_B);
+
+    spThreshSection->setContentLayout(*spThreshVBox);
+    _sideLayout->addWidget(spThreshSection);
 
     // ---------------------------------------- 
 
@@ -220,6 +263,25 @@ void MainWindow::_setupUI()
         } else {
             _adaptParams.method = GAUSSIAN_C;
         }
+    });
+
+    connect(_binThreshold_R, &QSlider::valueChanged, this, &MainWindow::applySpecialThreshold);
+    connect(_binThreshold_R, &QSlider::sliderReleased, this, &MainWindow::validateThreshold);
+    connect(_binThreshold_G, &QSlider::valueChanged, this, &MainWindow::applySpecialThreshold);
+    connect(_binThreshold_G, &QSlider::sliderReleased, this, &MainWindow::validateThreshold);
+    connect(_binThreshold_B, &QSlider::valueChanged, this, &MainWindow::applySpecialThreshold);
+    connect(_binThreshold_B, &QSlider::sliderReleased, this, &MainWindow::validateThreshold);
+    connect(_invertThresholdR, &QCheckBox::checkStateChanged, this, [=]() {
+        applySpecialThreshold();
+        validateThreshold();
+    });
+    connect(_invertThresholdG, &QCheckBox::checkStateChanged, this, [=]() {
+        applySpecialThreshold();
+        validateThreshold();
+    });
+    connect(_invertThresholdB, &QCheckBox::checkStateChanged, this, [=]() {
+        applySpecialThreshold();
+        validateThreshold();
     });
 
     // ################################################################# Shortcuts
@@ -314,6 +376,7 @@ void MainWindow::applyThreshold()
     // 2) Apply threshold
     double thres = _binThreshold->value();
     cv::threshold(maxGray, _currentImage, thres, 255, cv::THRESH_BINARY);
+    cv::cvtColor(_currentImage, _currentImage, cv::COLOR_GRAY2BGR); // convert back to 3 channels for consistency with other operations
     if(!_currentMask.empty()){
         cv::Mat maskedImage;
         _currentImage.copyTo(maskedImage, _currentMask);
@@ -322,7 +385,46 @@ void MainWindow::applyThreshold()
     _currentOverlays = 0; // reset overlays
     // 3) Display
     _displayImage(false);
-    _threshValueLabel->setText("Threshold : " + QString::number((int)thres));
+    _threshValueLabel->setText("Binary Threshold : " + QString::number((int)thres));
+}
+
+
+void MainWindow::applySpecialThreshold()
+{
+    if(_currentImage.empty()) return;
+    if(_originalImage.empty()) return;
+
+    if (_originalImage.channels() != 3) {
+        qDebug() << "Image is not 3-channel!";
+        return;
+    }
+    // convert to grayscale, single channel with max over rgb
+    // 1) Max-channel grayscale
+    cv::Mat ch[3];
+    cv::split(_originalImage, ch);        // B, G, R
+
+    double thres_R = _binThreshold_R->value();
+    cv::threshold(ch[2], ch[2], thres_R, 255, 
+        _invertThresholdR->isChecked() ? cv::THRESH_TOZERO_INV : cv::THRESH_TOZERO);
+    double thres_G = _binThreshold_G->value();
+    cv::threshold(ch[1], ch[1], thres_G, 255, 
+        _invertThresholdG->isChecked() ? cv::THRESH_TOZERO_INV : cv::THRESH_TOZERO);
+    double thres_B = _binThreshold_B->value();
+    cv::threshold(ch[0], ch[0], thres_B, 255, 
+        _invertThresholdB->isChecked() ? cv::THRESH_TOZERO_INV : cv::THRESH_TOZERO);
+    
+    cv::merge(ch, 3, _currentImage); // merge back to 3 channels
+    if(!_currentMask.empty()){
+        cv::Mat maskedImage;
+        _currentImage.copyTo(maskedImage, _currentMask);
+        _currentImage = maskedImage;
+    }
+    _currentOverlays = 0; // reset overlays
+    // 3) Display
+    _displayImage(false);
+    _threshValueLabel_R->setText("Red Threshold : " + QString::number((int)thres_R));
+    _threshValueLabel_G->setText("Green Threshold : " + QString::number((int)thres_G));
+    _threshValueLabel_B->setText("Blue Threshold : " + QString::number((int)thres_B));
 }
 
 

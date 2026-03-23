@@ -12,6 +12,7 @@
 #include <opencv2/opencv.hpp>
 #include <QDoubleSpinBox>
 #include <QShortcut>
+#include <QCheckBox>
 #include "ImageDisplay.h"
 
 #define CONNECTED_COMPONENTS 0x01
@@ -88,9 +89,20 @@ private:
     std::vector<uint8_t> _overlayStack;
     int _stackIndex = -1; // Allows undo functionality
 
+    QLabel *_threshValueLabel_R;
+    QLabel *_threshValueLabel_G;
+    QLabel *_threshValueLabel_B;
+    QSlider* _binThreshold_R;
+    QSlider* _binThreshold_G;
+    QSlider* _binThreshold_B;
+    QCheckBox* _invertThresholdR;
+    QCheckBox* _invertThresholdG;
+    QCheckBox* _invertThresholdB;
+
 private slots:
     void resetImage();
     void applyThreshold();
+    void applySpecialThreshold();
     void validateThreshold();
     void connectedComponentsMode();
     void applyMask();
