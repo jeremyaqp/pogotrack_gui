@@ -58,12 +58,14 @@ private:
     QVBoxLayout *_sideLayout;
     QLabel *_threshValueLabel;
 
-    cv::Mat _originalImage;
-    cv::Mat _currentImage;
+    cv::Mat _originalImage = cv::Mat::zeros(480, 640, CV_8UC3);
+    cv::Mat _currentImage = cv::Mat::zeros(480, 640, CV_8UC3);
+    cv::Mat _bgImage;
     cv::Mat _currentMask;
 
     void _setupUI();
     void _loadImage();
+    void _loadBackgroundImage();
     void _displayImage(bool addToStack = true);
     void _displayImage(cv::Mat img, bool addToStack = true);
 
@@ -103,6 +105,8 @@ private:
     QCheckBox* _invertThresholdG;
     QCheckBox* _invertThresholdB;
 
+    QSlider* _bgRemovalSlider;
+
 private slots:
     void resetImage();
     void applyThreshold();
@@ -113,6 +117,7 @@ private slots:
     void getHoughParams();
     void applyHoughCircles();
     void applyAdaptativeThreshold();
+    void removeBackground();
 };
 
 #endif // MAINWINDOW_H

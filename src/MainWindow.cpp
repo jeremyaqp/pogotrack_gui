@@ -193,6 +193,25 @@ void MainWindow::_setupUI()
     spThreshSection->setContentLayout(*spThreshVBox);
     _sideLayout->addWidget(spThreshSection);
 
+
+    // ---------------------------------------- Background Removal
+    QVBoxLayout *bgRemoveVBox = new QVBoxLayout;
+    Section* bgRemoveSection  = new Section("Background Removal", 300, this);
+    _bgRemovalSlider          = new QSlider(this);
+    QPushButton *browseBg     = new QPushButton("Open background image");
+
+    bgRemoveVBox->addWidget(_bgRemovalSlider);
+    bgRemoveVBox->addWidget(browseBg);
+
+    _bgRemovalSlider->setOrientation(Qt::Horizontal);
+    _bgRemovalSlider->setRange(0,100); // 0 to 100 for percentage
+    _bgRemovalSlider->setValue(0);
+    _bgRemovalSlider->setSingleStep(1.0);
+
+    bgRemoveSection->setContentLayout(*bgRemoveVBox);
+    _sideLayout->addWidget(bgRemoveSection);
+    _bgRemovalSlider->setVisible(false);
+
     // ----------------------------------------  Reset
 
     QPushButton *resetBtn       = new QPushButton("Reset");
@@ -306,6 +325,11 @@ void MainWindow::_setupUI()
         }
     });
 
+    connect(browseBg, &QPushButton::clicked, this, &MainWindow::_loadBackgroundImage);
+    connect(_bgRemovalSlider, &QSlider::valueChanged, this, &MainWindow::removeBackground);
+    connect(_bgRemovalSlider,  &QSlider::sliderReleased, this, &MainWindow::validateThreshold);
+
+    _displayImage(false);
 }
 
 void MainWindow::_loadImage()
@@ -321,6 +345,27 @@ void MainWindow::_loadImage()
     _currentImage = _originalImage.clone();
     _displayImage();
 }
+
+void MainWindow::_loadBackgroundImage()
+{
+    QString path =
+    QFileDialog::getOpenFileName(this, "Open a file", ".",
+        "Images (*.png *.bmp *.jpg);");
+
+    _bgImage = cv::imread(path.toStdString());
+    if (!_bgImage.empty())
+        _bgRemovalSlider->setVisible(true);
+
+    if(_bgImage.size() != _originalImage.size()){
+        QMessageBox::warning(this, "Size mismatch", "Background image size does not match original image size. Background removal will not work.");
+        _bgImage = cv::Mat();
+        _bgRemovalSlider->setVisible(false);
+    }
+    _sidePanel->updateGeometry();
+
+    _displayImage();
+}
+
 
 void MainWindow::_displayImage(bool addToStack)
 {
@@ -391,6 +436,18 @@ void MainWindow::applyThreshold()
 }
 
 
+void MainWindow::removeBackground()
+{
+    if(_bgImage.empty()) return;
+    if(_originalImage.empty()) return;
+    cv::Mat result;
+    cv::addWeighted(_bgImage, 1.0, _originalImage, -(double)_bgRemovalSlider->value() / 100.0, 0.0, result);
+    
+    _currentImage = result;
+    _displayImage(false);
+}
+
+
 void MainWindow::applySpecialThreshold()
 {
     if(_currentImage.empty()) return;
@@ -439,6 +496,7 @@ void MainWindow::resetImage()
 {
     _currentImage = _originalImage.clone();
     _currentMask = cv::Mat();
+    _bgImage = cv::Mat();
     _currentOverlays = 0;
     _stackIndex = -1;
     _displayedImageStack.clear();
@@ -465,6 +523,9 @@ void MainWindow::resetImage()
     _threshValueLabel_R->setText("Red Threshold : 0");
     _threshValueLabel_G->setText("Green Threshold : 0");
     _threshValueLabel_B->setText("Blue Threshold : 0");
+
+    _bgRemovalSlider->setVisible(false);
+    _sidePanel->updateGeometry();
 
     _displayImage();
 }
