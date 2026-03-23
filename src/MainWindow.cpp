@@ -156,7 +156,8 @@ void MainWindow::_setupUI()
 
     // ---------------------------------------- Special Thresholds
     QVBoxLayout *spThreshVBox = new QVBoxLayout;
-    Section* spThreshSection = new Section("Special Thresholds", 300, this);
+    Section* spThreshSection = new Section("RGB Thresholds", 300, this);
+    spThreshSection->setToolTip("Apply TOZERO or TOZERO_INV separately on each channel");
 
     _threshValueLabel_R   = new QLabel("Red Threshold : 0");
     _threshValueLabel_G   = new QLabel("Green Threshold : 0");
