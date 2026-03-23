@@ -9,6 +9,7 @@
 #include <QApplication>
 #include <QGroupBox>
 #include <QScrollArea>
+#include <QSplitter>
 #include "collapsible/Section.h"
 
 using namespace ui;
@@ -30,7 +31,6 @@ void MainWindow::_setupUI()
     QHBoxLayout *mainLayout = new QHBoxLayout;
     _display = new ImageDisplay;
     _display->setMinimumSize(320, 240);
-    setCentralWidget(_display);
 
     _sidePanel = new QWidget;
     _sideLayout = new QVBoxLayout;
@@ -174,13 +174,16 @@ void MainWindow::_setupUI()
 
     // ################################################################# General layout
     _sidePanel->setLayout(_sideLayout);
-    _sidePanel->setFixedWidth(200);
-
-    mainLayout->addWidget(_display, 1);
     scrollArea->setWidget(_sidePanel);
     scrollArea->setWidgetResizable(true);
-    mainLayout->addWidget(scrollArea);
+    scrollArea->setMinimumWidth(200);
 
+    QSplitter *splitter = new QSplitter(Qt::Horizontal);
+    splitter->setChildrenCollapsible(false);
+    splitter->addWidget(_display);
+    splitter->addWidget(scrollArea);
+
+    mainLayout->addWidget(splitter, 1);
     centralWidget->setLayout(mainLayout);
     setCentralWidget(centralWidget);
 
