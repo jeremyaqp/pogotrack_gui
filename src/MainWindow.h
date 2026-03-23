@@ -12,15 +12,21 @@
 #include <opencv2/opencv.hpp>
 #include <QDoubleSpinBox>
 #include <QShortcut>
+#include <QCheckBox>
 #include "ImageDisplay.h"
 
 #define CONNECTED_COMPONENTS 0x01
 #define HOUGH_CIRCLES        0x02
 
-enum adaptativeMethod {
-    MEAN_C,
-    GAUSSIAN_C
-};
+#define DEFAULT_HOUGH_DP 1.0
+#define DEFAULT_HOUGH_MIN_DIST 20.0
+#define DEFAULT_HOUGH_PARAM1 10.0
+#define DEFAULT_HOUGH_PARAM2 14.0
+#define DEFAULT_HOUGH_MIN_RADIUS 40
+#define DEFAULT_HOUGH_MAX_RADIUS 60
+#define DEFAULT_ADAPT_METHOD cv::ADAPTIVE_THRESH_MEAN_C
+#define DEFAULT_ADAPT_BLOCK_SIZE 11
+#define DEFAULT_ADAPT_C -10.0
 
 struct HoughParams {
     double dp;
@@ -33,7 +39,7 @@ struct HoughParams {
 
 
 struct AdaptativeParams {
-    adaptativeMethod method;
+    int method;
     int blockSize;
     double C;
 };
@@ -52,12 +58,14 @@ private:
     QVBoxLayout *_sideLayout;
     QLabel *_threshValueLabel;
 
-    cv::Mat _originalImage;
-    cv::Mat _currentImage;
+    cv::Mat _originalImage = cv::Mat::zeros(480, 640, CV_8UC3);
+    cv::Mat _currentImage = cv::Mat::zeros(480, 640, CV_8UC3);
+    cv::Mat _bgImage;
     cv::Mat _currentMask;
 
     void _setupUI();
     void _loadImage();
+    void _loadBackgroundImage();
     void _displayImage(bool addToStack = true);
     void _displayImage(cv::Mat img, bool addToStack = true);
 
@@ -67,36 +75,49 @@ private:
     std::vector<cv::Vec3f> _HoughCircles;
 
     QSlider* _binThreshold;
-    double _imgScale = 1.0;
 
-    HoughParams _params = {1.0, 20.0, 10.0, 14.0, 40, 60};
-    AdaptativeParams _adaptParams = {MEAN_C, 11, -10.0};
+    HoughParams _params = {DEFAULT_HOUGH_DP, DEFAULT_HOUGH_MIN_DIST, DEFAULT_HOUGH_PARAM1, DEFAULT_HOUGH_PARAM2, DEFAULT_HOUGH_MIN_RADIUS, DEFAULT_HOUGH_MAX_RADIUS};
+    AdaptativeParams _adaptParams = {DEFAULT_ADAPT_METHOD, DEFAULT_ADAPT_BLOCK_SIZE, DEFAULT_ADAPT_C};
 
-    QLineEdit *dpEdit;
-    QLineEdit *minDistEdit;
-    QLineEdit *param1Edit;
-    QLineEdit *param2Edit;
-    QLineEdit *minRadiusEdit;
-    QLineEdit *maxRadiusEdit;
+    QLineEdit *_HoughDpEdit;
+    QLineEdit *_HoughMinDistEdit;
+    QLineEdit *_HoughParam1Edit;
+    QLineEdit *_HoughParam2Edit;
+    QLineEdit *_HoughMinRadiusEdit;
+    QLineEdit *_HoughMaxRadiusEdit;
 
-    QRadioButton *meanCBtn;
-    QRadioButton *gaussianCBtn;
-    QLineEdit *adaptCEdit;
-    QLineEdit *adaptBlockSizeEdit;
+    QRadioButton *_AdaptiveMeanCBtn;
+    QRadioButton *_AdaptiveGaussianCBtn;
+    QLineEdit *_AdaptiveCEdit;
+    QLineEdit *_AdaptiveBlocksizeEdit;
 
     std::vector<cv::Mat> _displayedImageStack;
     std::vector<uint8_t> _overlayStack;
     int _stackIndex = -1; // Allows undo functionality
 
+    QLabel *_threshValueLabel_R;
+    QLabel *_threshValueLabel_G;
+    QLabel *_threshValueLabel_B;
+    QSlider* _binThreshold_R;
+    QSlider* _binThreshold_G;
+    QSlider* _binThreshold_B;
+    QCheckBox* _invertThresholdR;
+    QCheckBox* _invertThresholdG;
+    QCheckBox* _invertThresholdB;
+
+    QSlider* _bgRemovalSlider;
+
 private slots:
     void resetImage();
     void applyThreshold();
+    void applySpecialThreshold();
     void validateThreshold();
     void connectedComponentsMode();
     void applyMask();
     void getHoughParams();
     void applyHoughCircles();
     void applyAdaptativeThreshold();
+    void removeBackground();
 };
 
 #endif // MAINWINDOW_H

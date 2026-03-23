@@ -28,6 +28,8 @@ add_executable(pogotrack_gui
     src/MainWindow.cpp
     src/MainWindow.h
     src/Filter.h
+    src/collapsible/Section.cpp
+    src/collapsible/Section.h
     ${QT_RESOURCES}
 )
 
