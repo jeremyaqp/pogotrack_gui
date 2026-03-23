@@ -292,15 +292,15 @@ void MainWindow::_setupUI()
     connect(_binThreshold_G, &QSlider::sliderReleased, this, &MainWindow::validateThreshold);
     connect(_binThreshold_B, &QSlider::valueChanged, this, &MainWindow::applySpecialThreshold);
     connect(_binThreshold_B, &QSlider::sliderReleased, this, &MainWindow::validateThreshold);
-    connect(_invertThresholdR, &QCheckBox::checkStateChanged, this, [=]() {
+    connect(_invertThresholdR, &QCheckBox::stateChanged, this, [=]() {
         applySpecialThreshold();
         validateThreshold();
     });
-    connect(_invertThresholdG, &QCheckBox::checkStateChanged, this, [=]() {
+    connect(_invertThresholdG, &QCheckBox::stateChanged, this, [=]() {
         applySpecialThreshold();
         validateThreshold();
     });
-    connect(_invertThresholdB, &QCheckBox::checkStateChanged, this, [=]() {
+    connect(_invertThresholdB, &QCheckBox::stateChanged, this, [=]() {
         applySpecialThreshold();
         validateThreshold();
     });
